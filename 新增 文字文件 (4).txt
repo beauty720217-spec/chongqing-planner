@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>重慶 5 天 4 夜精華遊</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 React 和 ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- 引入 Babel 用於解析 JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* 針對 LINE 瀏覽器的優化 */
+        html, body { height: 100%; overflow-x: hidden; }
+        #root { min-height: 100vh; display: flex; flex-direction: column; }
+    </style>
+</head>
+<body class="bg-gray-100 flex justify-center items-start min-h-screen">
+
+    <div id="root" class="w-full max-w-md bg-white min-h-screen shadow-2xl relative mx-auto"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- 簡易圖標組件 (SVG) ---
+        const IconBase = ({ children, className, size = 20, ...props }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>
+        );
+        const MapPin = (props) => <IconBase {...props}><path d="M20 10c0 6-9 13-9 13s-9-7-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></IconBase>;
+        const Info = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></IconBase>;
+        const CalendarIcon = (props) => <IconBase {...props}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></IconBase>;
+        const AlertCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></IconBase>;
+        const XIcon = (props) => <IconBase {...props}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></IconBase>;
+        const MapIcon = (props) => <IconBase {...props}><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></IconBase>;
+        const Navigation = (props) => <IconBase {...props}><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></IconBase>;
+        const ChevronRight = (props) => <IconBase {...props}><polyline points="9 18 15 12 9 6"></polyline></IconBase>;
+        const Camera = (props) => <IconBase {...props}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></IconBase>;
+        const Cloud = (props) => <IconBase {...props}><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></IconBase>;
+        const CloudRain = (props) => <IconBase {...props}><line x1="16" y1="13" x2="16" y2="21"></line><line x1="8" y1="13" x2="8" y2="21"></line><line x1="12" y1="15" x2="12" y2="23"></line><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></IconBase>;
+        const Sun = (props) => <IconBase {...props}><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></IconBase>;
+        const Umbrella = (props) => <IconBase {...props}><path d="M23 12a11.05 11.05 0 0 0-22 0zm-5 7a3 3 0 0 1-6 0v-7"></path></IconBase>;
+        const Shirt = (props) => <IconBase {...props}><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></IconBase>;
+        const ShareIcon = (props) => <IconBase {...props}><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></IconBase>;
+
+        const ChongqingTripApp = () => {
+            const [activeTab, setActiveTab] = useState('day1');
+            const [view, setView] = useState('itinerary'); 
+            const [expandedMapIndex, setExpandedMapIndex] = useState(null);
+
+            const tripInfo = {
+                title: "重慶 5 天 4 夜精華遊",
+                date: "2025/03/03 (二) ～ 03/07 (六)",
+                location: "江北區 / 觀音橋附近",
+                tips: "重慶地形特殊，步行需穿舒適鞋履；D3建議包車。",
+                // Cute illustration cover image - Chongqing Style Cartoon
+                coverImage: "https://img.freepik.com/free-vector/flat-design-travel-concept-with-landmarks_23-2147754655.jpg" 
+            };
+
+            const weatherData = {
+                day1: { temp: "11-16°C", condition: "多雲時陰", icon: Cloud, tip: "微涼，舒適薄外套" },
+                day2: { temp: "12-17°C", condition: "陰轉小雨", icon: CloudRain, tip: "攜帶雨具，防滑鞋" },
+                day3: { temp: "10-15°C", condition: "小雨", icon: Umbrella, tip: "山區較涼，需保暖外套" },
+                day4: { temp: "11-18°C", condition: "多雲", icon: Sun, tip: "早晚溫差大，洋蔥式穿搭" },
+                day5: { temp: "13-19°C", condition: "晴時多雲", icon: Sun, tip: "舒適，適合逛街" }
+            };
+
+            const itineraryData = {
+                day1: {
+                    date: "3/03 (二)",
+                    title: "初抵山城",
+                    subtitle: "抵達重慶 & 商圈初體驗",
+                    highlight: "觀音橋好吃街、九街夜生活",
+                    events: [
+                        { 
+                            time: "18:00", 
+                            title: "抵達重慶江北機場", 
+                            desc: "入境T3航站/7號出口。尋找「黃色法拉利」計程車拍照點，前往酒店辦理入住。", 
+                            emoji: "✈️", 
+                            location: "重慶江北國際機場T3航站樓",
+                        },
+                        { 
+                            time: "晚餐", 
+                            title: "觀音橋商圈", 
+                            desc: "重慶最熱鬧商圈散步。必去「好吃街」品嚐在地小吃（烤串、酸辣粉、豌雜麵）。", 
+                            type: "food", 
+                            emoji: "🌶️", 
+                            location: "重慶觀音橋步行街",
+                        },
+                        { 
+                            time: "晚上", 
+                            title: "九街 (不夜九街)", 
+                            desc: "若有體力可前往，這是年輕人的酒吧街，適合拍夜景、吃宵夜。", 
+                            type: "activity", 
+                            emoji: "🍻", 
+                            location: "重慶九街",
+                        },
+                        { 
+                            time: "全天", 
+                            title: "行程建議", 
+                            desc: "第一天行程輕鬆為主，建議早點休息儲備體力。", 
+                            type: "note", 
+                            emoji: "💡", 
+                            location: "重慶觀音橋" 
+                        }
+                    ]
+                },
+                day2: {
+                    date: "3/04 (三)",
+                    title: "魔幻市區",
+                    subtitle: "山城步道 & 洪崖洞夜景",
+                    highlight: "18梯、解放碑、魔幻夜景動線",
+                    events: [
+                        { 
+                            time: "早餐", 
+                            title: "野水溝早市", 
+                            desc: "體驗在地煙火氣：燒白、油條、魯鵝、肥腸牛肉麵。", 
+                            type: "food", 
+                            emoji: "🍜", 
+                            location: "重慶野水溝",
+                        },
+                        { 
+                            time: "上午", 
+                            title: "山城步道 & 18梯", 
+                            desc: "從「佳實養老院入口」進入山城步道（紅牆、老房子）。接著步行至18梯傳統風貌區（約30-40分）。", 
+                            type: "activity", 
+                            emoji: "🏮", 
+                            location: "重慶山城巷",
+                        },
+                        { 
+                            time: "午餐", 
+                            title: "山城家常菜", 
+                            desc: "地址：渝中區五一路250號。推薦：虎皮肘子、豬蹄湯。", 
+                            type: "food", 
+                            emoji: "🍚", 
+                            location: "重慶渝中區五一路250號" 
+                        },
+                        { 
+                            time: "下午", 
+                            title: "解放碑 & 魁星樓", 
+                            desc: "解放碑商圈購物。隨後前往魁星樓（山城第三步道旁），體驗「網紅視角」俯瞰城市。", 
+                            type: "activity", 
+                            emoji: "🏙️", 
+                            location: "重慶解放碑步行街",
+                        },
+                        { 
+                            time: "傍晚", 
+                            title: "魔幻夜景動線", 
+                            desc: "1. 洪崖洞（黃昏拍吊腳樓）→ 2. 千廝門大橋（拍側面）→ 3. 江北嘴江灘公園 → 4. 大劇院平台（拍對岸全景）。", 
+                            type: "camera", 
+                            emoji: "📸", 
+                            isHighlight: true, 
+                            location: "重慶洪崖洞民俗風貌區",
+                        },
+                        { 
+                            time: "晚餐", 
+                            title: "垭口老烧烤", 
+                            desc: "密子君推薦的人氣燒烤。", 
+                            type: "food", 
+                            emoji: "🍢", 
+                            location: "重慶南山垭口" 
+                        }
+                    ]
+                },
+                day3: {
+                    date: "3/05 (四)",
+                    title: "武隆仙境",
+                    subtitle: "天生三橋 & 苗族風情",
+                    highlight: "變形金剛取景地、九黎城",
+                    events: [
+                        { 
+                            time: "早晨", 
+                            title: "包車出發", 
+                            desc: "今日行程較遠，強烈建議包車。準時從市區出發。", 
+                            type: "transport", 
+                            emoji: "🚐", 
+                            location: "重慶觀音橋" 
+                        },
+                        { 
+                            time: "上午", 
+                            title: "武隆天生三橋", 
+                            desc: "停留約3小時。世界自然遺產，電影《滿城盡帶黃金甲》及《變形金剛》取景地。", 
+                            type: "activity", 
+                            emoji: "🏔️", 
+                            isHighlight: true, 
+                            location: "重慶武隆天生三橋",
+                        },
+                        { 
+                            time: "途經", 
+                            title: "烏江畫廊", 
+                            desc: "沿途欣賞景色，停車拍照即可（約 20–30 分鐘）。", 
+                            type: "activity", 
+                            emoji: "🖼️", 
+                            location: "重慶烏江畫廊",
+                        },
+                        { 
+                            time: "下午", 
+                            title: "蚩尤九黎城", 
+                            desc: "停留約 1–2 小時。苗族文化主題，有網美玻璃橋與表演。", 
+                            type: "activity", 
+                            emoji: "👹", 
+                            location: "重慶蚩尤九黎城",
+                        },
+                        { 
+                            time: "傍晚", 
+                            title: "返回市區", 
+                            desc: "車程約 2 小時。", 
+                            type: "transport", 
+                            emoji: "⏰", 
+                            location: "重慶市區" 
+                        },
+                        { 
+                            time: "晚餐", 
+                            title: "秋香烤魚大排檔", 
+                            desc: "融景城臻苑店。必吃重慶特色烤魚。", 
+                            type: "food", 
+                            emoji: "🐟", 
+                            location: "重慶融景城臻苑" 
+                        }
+                    ]
+                },
+                day4: {
+                    date: "3/06 (五)",
+                    title: "南岸舊夢",
+                    subtitle: "南山老街 & 三毛故居",
+                    highlight: "老君洞、下浩里、南濱路夜景",
+                    events: [
+                        { 
+                            time: "07:30", 
+                            title: "汪家堡早市", 
+                            desc: "最接地氣的本地菜市場。火鍋料、土雞、臘肉、水果。", 
+                            type: "activity", 
+                            emoji: "🥬", 
+                            location: "重慶汪家堡" 
+                        },
+                        { 
+                            time: "11:30", 
+                            title: "出發前往南山", 
+                            desc: "地鐵轉公車或打車。", 
+                            type: "transport", 
+                            emoji: "🚡", 
+                            location: "重慶南山" 
+                        },
+                        { 
+                            time: "13:00", 
+                            title: "黃桷埡老街", 
+                            desc: "重慶最美老街漫步。", 
+                            type: "activity", 
+                            emoji: "🏚️", 
+                            location: "重慶黃桷埡老街",
+                        },
+                        { 
+                            time: "14:00", 
+                            title: "三毛故居", 
+                            desc: "文青必訪拍照點。", 
+                            type: "activity", 
+                            emoji: "📚", 
+                            location: "重慶三毛故居",
+                        },
+                        { 
+                            time: "15:00", 
+                            title: "老君洞", 
+                            desc: "建議從「西門下方」進入。山洞、古剎與洞穴結合的獨特景觀。", 
+                            type: "activity", 
+                            emoji: "🕍", 
+                            location: "重慶老君洞道觀",
+                        },
+                        { 
+                            time: "下午茶", 
+                            title: "烤茶", 
+                            desc: "在南山享受悠閒午後。", 
+                            type: "food", 
+                            emoji: "🍵", 
+                            location: "重慶南山一棵樹" 
+                        },
+                        { 
+                            time: "傍晚", 
+                            title: "下浩里 & 龍門浩", 
+                            desc: "靠近南山山腰的老街與江景。晚上龍門浩氣氛極佳。", 
+                            type: "activity", 
+                            emoji: "🌆", 
+                            location: "重慶龍門浩老街",
+                        },
+                        { 
+                            time: "晚餐", 
+                            title: "南濱路", 
+                            desc: "沿著南濱路選擇餐廳，邊吃邊看絕美江景。", 
+                            type: "food", 
+                            emoji: "🍽️", 
+                            location: "重慶南濱路",
+                        }
+                    ]
+                },
+                day5: {
+                    date: "3/07 (六)",
+                    title: "告別重慶",
+                    subtitle: "光環購物 & 最後採買",
+                    highlight: "沐光森林、老火鍋",
+                    events: [
+                        { 
+                            time: "上午", 
+                            title: "光環購物公園", 
+                            desc: "華潤萬象城。參觀超美綠植中庭「沐光森林」，適合最後採買與拍照。", 
+                            type: "activity", 
+                            emoji: "🌳", 
+                            location: "重慶光環購物公園",
+                        },
+                        { 
+                            time: "午餐", 
+                            title: "周媽老火鍋", 
+                            desc: "重慶高人氣、湯底夠味的老火鍋，告別重慶的最後一餐。", 
+                            type: "food", 
+                            emoji: "🍲", 
+                            location: "重慶周媽老火鍋" 
+                        },
+                        { 
+                            time: "甜點", 
+                            title: "Crapes Cake", 
+                            desc: "飯後甜點。", 
+                            type: "food", 
+                            emoji: "🍰", 
+                            location: "重慶Crapes Cake" 
+                        },
+                        { 
+                            time: "14:30", 
+                            title: "前往機場", 
+                            desc: "建議 14:30–15:00 出發。從江北/觀音橋搭地鐵去機場很方便。", 
+                            type: "transport", 
+                            emoji: "🚇", 
+                            location: "重慶江北國際機場" 
+                        },
+                        { 
+                            time: "17:15", 
+                            title: "班機起飛", 
+                            desc: "帶著滿滿的回憶離開重慶。", 
+                            type: "transport", 
+                            emoji: "🛫", 
+                            location: "重慶江北國際機場T3" 
+                        }
+                    ]
+                }
+            };
+
+            const toggleMap = (index) => {
+                setExpandedMapIndex(expandedMapIndex === index ? null : index);
+            };
+
+            const shareApp = () => {
+                if (navigator.share) {
+                    navigator.share({
+                        title: '重慶 5 天 4 夜精華遊',
+                        text: '我的重慶之旅詳細行程！',
+                        url: window.location.href,
+                    })
+                    .then(() => console.log('分享成功'))
+                    .catch((error) => console.log('分享失敗', error));
+                } else {
+                    alert("請使用瀏覽器的分享功能傳送連結");
+                }
+            };
+
+            const DayButton = ({ dayKey, label, date }) => (
+                <button
+                    onClick={() => { setActiveTab(dayKey); setView('itinerary'); setExpandedMapIndex(null); }}
+                    className={`flex-shrink-0 px-4 py-3 mr-2 rounded-xl flex flex-col items-center justify-center transition-all duration-300 min-w-[80px] ${
+                        activeTab === dayKey && view === 'itinerary'
+                            ? 'bg-gradient-to-br from-red-600 to-orange-600 text-white shadow-lg scale-105' 
+                            : 'bg-white text-gray-500 border border-gray-100'
+                    }`}
+                >
+                    <span className="text-xs font-medium opacity-80">{date.split(' ')[0]}</span>
+                    <span className="text-sm font-bold">{label}</span>
+                </button>
+            );
+
+            const WeatherCard = ({ dayData }) => {
+                const Icon = dayData.icon;
+                return (
+                    <div className="mx-5 mb-6 bg-blue-50 rounded-xl p-4 border border-blue-100 flex items-center justify-between shadow-sm">
+                        <div className="flex items-center">
+                            <div className="bg-white p-2 rounded-full shadow-sm mr-3">
+                                <Icon size={24} className="text-blue-500" />
+                            </div>
+                            <div>
+                                <div className="text-xs text-gray-500 font-medium">每日天氣預報</div>
+                                <div className="text-sm font-bold text-gray-800">{dayData.condition} • {dayData.temp}</div>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <div className="flex items-center justify-end text-xs text-blue-600 font-medium mb-0.5">
+                                <Shirt size={12} className="mr-1" /> 穿搭建議
+                            </div>
+                            <div className="text-xs text-gray-600">{dayData.tip}</div>
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="bg-gray-50 min-h-screen pb-20 relative">
+                    {/* Cover Area - Replaced Image with Gradient */}
+                    <div className="relative h-56 overflow-hidden bg-gradient-to-br from-red-600 to-orange-500">
+                        <div className="absolute inset-0 bg-black/10"></div>
+                        
+                        <div className="absolute bottom-4 left-4 z-20 text-white pb-6">
+                            <div className="flex items-center space-x-2 text-xs font-medium bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full w-fit mb-1 shadow-sm border border-white/30">
+                                <span>5天4夜</span>
+                            </div>
+                            <h1 className="text-3xl font-bold tracking-tight drop-shadow-md">重慶 5 天 4 夜精華遊</h1>
+                            <div className="flex items-center text-sm opacity-95 mt-1 drop-shadow-sm">
+                                <CalendarIcon size={14} className="mr-1" />
+                                {tripInfo.date}
+                            </div>
+                        </div>
+                        
+                        <button onClick={shareApp} className="absolute top-4 left-4 z-20 bg-white/20 backdrop-blur-md p-2 rounded-full text-white hover:bg-white/30 transition-colors shadow-sm">
+                            <ShareIcon size={20} />
+                        </button>
+
+                        <button onClick={() => setView(view === 'info' ? 'itinerary' : 'info')} className="absolute top-4 right-4 z-20 bg-white/20 backdrop-blur-md p-2 rounded-full text-white hover:bg-white/30 transition-colors shadow-sm">
+                            <Info size={20} />
+                        </button>
+                    </div>
+
+                    {/* Main Content Area */}
+                    <div className="relative -mt-6 bg-gray-50 rounded-t-3xl z-30 min-h-[500px] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                        
+                        {view === 'itinerary' ? (
+                            <>
+                                <div className="sticky top-0 bg-gray-50 z-40 pt-4 pb-2 px-4 shadow-sm rounded-t-3xl">
+                                    <div className="flex overflow-x-auto hide-scrollbar pb-2">
+                                        {Object.keys(itineraryData).map((key, index) => (
+                                            <DayButton key={key} dayKey={key} label={`Day ${index + 1}`} date={itineraryData[key].date} />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="px-5 py-4">
+                                    <h2 className="text-2xl font-bold text-gray-800">{itineraryData[activeTab].title}</h2>
+                                    <p className="text-gray-500 text-sm mt-1">{itineraryData[activeTab].subtitle}</p>
+                                    <div className="mt-3 inline-flex items-center px-3 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-medium">
+                                        <AlertCircle size={12} className="mr-1.5" />
+                                        重點：{itineraryData[activeTab].highlight}
+                                    </div>
+                                </div>
+
+                                <WeatherCard dayData={weatherData[activeTab]} />
+
+                                <div className="px-5 pb-8">
+                                    <div className="relative border-l-2 border-gray-200 ml-3 space-y-8">
+                                        {itineraryData[activeTab].events.map((event, idx) => (
+                                            <div key={idx} className="relative pl-8 group">
+                                                <div className={`absolute -left-[9px] top-1 w-5 h-5 rounded-full border-4 border-white shadow-sm flex items-center justify-center ${event.isHighlight ? 'bg-red-500' : 'bg-gray-300'}`}></div>
+                                                
+                                                <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${event.time.includes(':') ? 'bg-gray-100 text-gray-600' : 'bg-red-50 text-red-600'}`}>{event.time}</span>
+                                                        <div className="flex space-x-2">
+                                                            <button onClick={() => toggleMap(idx)} className={`p-1.5 rounded-full transition-colors ${expandedMapIndex === idx ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
+                                                                {expandedMapIndex === idx ? <XIcon size={14} /> : <MapIcon size={14} />}
+                                                            </button>
+                                                            <span className="text-xl filter grayscale-[0.2] hover:grayscale-0 transition-all cursor-default">{event.emoji}</span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <h3 className="text-lg font-bold text-gray-800 mb-1">{event.title}</h3>
+                                                    <p className="text-gray-600 text-sm leading-relaxed">{event.desc}</p>
+                                                    
+                                                    {event.type === 'food' && <div className="mt-3 flex items-center text-xs text-orange-600 font-medium"><span className="mr-1 text-base">🤤</span> 推薦美食</div>}
+
+                                                    {expandedMapIndex === idx && (
+                                                        <div className="mt-4 pt-4 border-t border-gray-100 animate-fadeIn">
+                                                            <div className="rounded-lg overflow-hidden border border-gray-200 h-48 bg-gray-100 relative">
+                                                                <iframe width="100%" height="100%" frameBorder="0" scrolling="no" marginHeight="0" marginWidth="0" src={`https://maps.google.com/maps?q=${encodeURIComponent(event.location)}&t=&z=13&ie=UTF8&iwloc=&output=embed`} title={`Map for ${event.title}`}></iframe>
+                                                            </div>
+                                                            <div className="mt-3 flex justify-between items-center">
+                                                                <div className="flex items-center text-xs text-gray-500"><MapPin size={12} className="mr-1" />{event.location}</div>
+                                                                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`} target="_blank" className="flex items-center text-xs bg-blue-600 text-white px-3 py-1.5 rounded-full hover:bg-blue-700 transition-colors"><Navigation size={12} className="mr-1" />導航</a>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="p-6 animate-fadeIn">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-6">行程資訊 & 筆記</h2>
+                                <div className="space-y-4">
+                                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                                        <div className="flex items-center space-x-3 mb-3">
+                                            <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><MapPin size={20} /></div>
+                                            <h3 className="font-bold text-gray-800">住宿建議</h3>
+                                        </div>
+                                        <p className="text-gray-600 text-sm leading-relaxed">{tripInfo.location}<br/><span className="text-xs text-gray-400">交通最方便，美食聚集地。</span></p>
+                                        <div className="mt-3">
+                                            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("重慶觀音橋")}`} target="_blank" className="text-xs text-blue-600 flex items-center font-medium">查看區域地圖 <ChevronRight size={12} /></a>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                                        <div className="flex items-center space-x-3 mb-3">
+                                            <div className="bg-orange-100 p-2 rounded-lg text-orange-600"><AlertCircle size={20} /></div>
+                                            <h3 className="font-bold text-gray-800">重點提醒</h3>
+                                        </div>
+                                        <ul className="text-gray-600 text-sm space-y-2 list-disc list-inside">
+                                            <li>重慶被稱為「山城」，地形起伏大，請務必穿著<strong>舒適好走的鞋子</strong>。</li>
+                                            <li>Day 3 前往武隆距離較遠，建議<strong>包車</strong>最為輕鬆。</li>
+                                            <li>重慶口味偏辣，腸胃藥備用。</li>
+                                            <li>導航在重慶立體交通中有時會失靈，問路人最快。</li>
+                                        </ul>
+                                    </div>
+
+                                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                                        <div className="flex items-center space-x-3 mb-3">
+                                            <div className="bg-purple-100 p-2 rounded-lg text-purple-600"><Camera size={20} /></div>
+                                            <h3 className="font-bold text-gray-800">必拍打卡點</h3>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {['洪崖洞夜景', '黃色法拉利', '李子壩穿樓', '魁星樓天橋', '長江索道'].map(tag => (
+                                                <span key={tag} className="px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">#{tag}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onClick={() => setView('itinerary')} className="mt-8 w-full py-3 bg-gray-800 text-white rounded-xl font-medium hover:bg-gray-900 transition-colors">返回行程表</button>
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* Floating Map Button */}
+                    <div className="fixed bottom-6 right-6 z-50">
+                        <button onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("重慶市")}`, '_blank')} className="bg-red-600 text-white p-4 rounded-full shadow-lg shadow-red-600/30 hover:scale-110 transition-transform flex items-center justify-center">
+                            <MapPin size={24} />
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ChongqingTripApp />);
+    </script>
+</body>
+</html>
